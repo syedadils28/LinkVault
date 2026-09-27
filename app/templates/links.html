@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}My Links - LinkVault{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-content">
+        <h1>My Links</h1>
+        <p>Manage and organize all your saved resources.</p>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('links.add_link') }}" class="btn btn-primary">
+            <i data-lucide="plus"></i> Add Link
+        </a>
+    </div>
+</div>
+
+<div class="toolbar">
+    <div class="search-bar">
+        <i data-lucide="search"></i>
+        <input type="text" id="searchInput" placeholder="Search title, URL, tags...">
+    </div>
+    
+    <div class="filter-group">
+        <select id="typeFilter" class="form-control">
+            <option value="all">All Types</option>
+            <option value="Website">Website</option>
+            <option value="GitHub">GitHub</option>
+            <option value="Documentation">Documentation</option>
+            <option value="YouTube">YouTube</option>
+            <option value="Article">Article</option>
+            <option value="Research Paper">Research Paper</option>
+        </select>
+        
+        <select id="collectionFilter" class="form-control">
+            <option value="all">All Collections</option>
+            {% for collection in collections %}
+                <option value="{{ collection.name }}">{{ collection.name }}</option>
+            {% endfor %}
+        </select>
+        
+        <button id="favoriteFilterBtn" class="btn btn-outline" title="Toggle Favorites Only">
+            <i data-lucide="star"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Bulk Actions (Hidden by default) -->
+<div class="bulk-actions" id="bulkActions" style="display: none;">
+    <span class="selection-count"><span id="selectedCount">0</span> links selected</span>
+    <div class="bulk-buttons">
+        <button class="btn btn-sm btn-outline" id="bulkExportBtn"><i data-lucide="download"></i> Export</button>
+        <button class="btn btn-sm btn-danger-outline" id="bulkDeleteBtn"><i data-lucide="trash-2"></i> Delete</button>
+    </div>
+</div>
+
+{% if links %}
+<div class="link-grid" id="linkGrid">
+    {% for link in links %}
+    <div class="link-card" data-title="{{ link.title | lower }}" data-url="{{ link.url | lower }}" data-type="{{ link.link_type }}" data-collection="{{ link.collection.name if link.collection else '' }}" data-favorite="{{ 'true' if link.is_favorite else 'false' }}" data-tags="{% for tag in link.tags %}{{ tag.name | lower }} {% endfor %}">
+        
+        <div class="card-checkbox">
+            <input type="checkbox" class="link-checkbox" value="{{ link.id }}">
+        </div>
+        
+        <div class="card-header">
+            <div class="type-badge {{ link.link_type | lower | replace(' ', '-') }}">
+                <i data-lucide="{{ get_icon_for_type(link.link_type) }}"></i> {{ link.link_type }}
+            </div>
+            <button class="favorite-btn {% if link.is_favorite %}active{% endif %}" data-id="{{ link.id }}" title="Toggle Favorite">
+                <i data-lucide="star" class="{% if link.is_favorite %}filled{% endif %}"></i>
+            </button>
+        </div>
+        
+        <div class="card-body">
+            <h3 class="card-title" title="{{ link.title or link.url }}">{{ link.title or 'Untitled Link' }}</h3>
+            <p class="card-desc">{{ link.description or 'No description provided.' }}</p>
+            <a href="{{ link.url }}" target="_blank" class="card-url" title="{{ link.url }}">{{ link.url }}</a>
+            
+            {% if link.notes %}
+            <div class="markdown-notes-container mt-3" style="font-size: 0.9rem; color: var(--text-secondary); background: var(--bg-surface-hover); padding: 10px; border-radius: 8px; border-left: 3px solid var(--primary-color);">
+                <div class="markdown-notes-content" data-raw="{{ link.notes }}"></div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="card-footer">
+            <div class="tags-container">
+                {% for tag in link.tags %}
+                    <span class="tag">#{{ tag.name }}</span>
+                {% endfor %}
+            </div>
+            
+            <div class="card-actions">
+                <button class="icon-btn" onclick="openUserEditModal({{ link.id }})" title="Edit"><i data-lucide="edit-2"></i></button>
+                <button class="icon-btn qr-btn" onclick="showQRCode('{{ link.url }}')" title="Show QR Code"><i data-lucide="qr-code"></i></button>
+                <a href="{{ link.url }}" target="_blank" class="icon-btn" title="Open"><i data-lucide="external-link"></i></a>
+                <button class="icon-btn copy-btn" data-url="{{ link.url }}" title="Copy URL"><i data-lucide="copy"></i></button>
+                <button class="icon-btn delete-btn" data-id="{{ link.id }}" title="Delete"><i data-lucide="trash-2"></i></button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Hidden form for bulk export -->
+<form id="bulkExportForm" method="POST" action="{{ url_for('exports.export_links') }}" style="display: none;">
+    <input type="hidden" name="format" value="csv">
+    <input type="hidden" name="scope" value="selected">
+    <input type="hidden" name="selected_ids" id="bulkSelectedIds">
+</form>
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">
+        <i data-lucide="bookmark"></i>
+    </div>
+    <h2>No links saved yet</h2>
+    <p>Start building your personal knowledge base by adding your first link.</p>
+    <a href="{{ url_for('links.add_link') }}" class="btn btn-primary mt-4">Add a Link</a>
+</div>
+{% endif %}
+
+{% include 'user_edit_link_modal.html' %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/links.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
+        const noteContainers = document.querySelectorAll('.markdown-notes-content');
+        noteContainers.forEach(container => {
+            const raw = container.getAttribute('data-raw');
+            if (raw) {
+                container.innerHTML = DOMPurify.sanitize(marked.parse(raw));
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

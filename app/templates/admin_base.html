@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel - LinkVault{% endblock %}</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/tab_logo.jpg') }}">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=9">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v=9">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/forms.css') }}?v=9">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/minion_toggle.css') }}?v=9">
+</head>
+<body class="admin-body">
+
+    <!-- Global Top Navbar -->
+    <header class="global-navbar">
+        <div class="global-navbar-left">
+            <div class="global-logo-text">
+                <i data-lucide="link-2" style="color: var(--primary-color);"></i>
+                <span>LinkVault</span> <span style="color: var(--text-muted); font-weight: 400; margin-left: 5px;">| Admin Panel</span>
+            </div>
+        </div>
+        <div class="global-navbar-right">
+            <i data-lucide="bell" style="color: var(--text-muted); cursor: pointer; margin-right: 15px; width: 20px; height: 20px;"></i>
+            
+            <div class="profile-dropdown-container">
+                <div class="profile-dropdown-trigger" id="profileDropdownBtn">
+                    {% if current_user.profile_image %}
+                    <div class="profile-avatar" style="background-image: url('{{ url_for('static', filename='uploads/profiles/' + current_user.profile_image) }}'); background-size: cover; background-position: center; color: transparent;"></div>
+                    {% else %}
+                    <div class="profile-avatar">{{ current_user.username[0]|upper }}</div>
+                    {% endif %}
+                    <div class="profile-info">
+                        <span class="profile-name">{{ current_user.username }}</span>
+                        <span class="profile-email">{{ current_user.email }}</span>
+                    </div>
+                    <i data-lucide="chevron-down" class="profile-caret"></i>
+                </div>
+                
+                <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                    <a href="{{ url_for('dashboard.profile') }}"><i data-lucide="key"></i> Change Password</a>
+                    <hr>
+                    <a href="{{ url_for('auth.logout') }}"><i data-lucide="log-out"></i> Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="app-body">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <ul class="admin-menu">
+            <div class="admin-menu-section" style="margin-top: 15px;">Overview</div>
+            <li>
+                <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                    <i data-lucide="layout-dashboard"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('dashboard.profile') }}" class="{% if request.endpoint == 'dashboard.profile' %}active{% endif %}">
+                    <i data-lucide="user"></i> Profile
+                </a>
+            </li>
+            
+            <div class="admin-menu-section">User Management</div>
+            <li>
+                <a href="{{ url_for('admin.manage_users') }}" class="{% if request.endpoint == 'admin.manage_users' %}active{% endif %}">
+                    <i data-lucide="users"></i> Registered Users
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin.create_admin') }}" class="{% if request.endpoint == 'admin.create_admin' %}active{% endif %}">
+                    <i data-lucide="user-plus"></i> Create Admin
+                </a>
+            </li>
+            
+            <div class="admin-menu-section">Moderation</div>
+            <li>
+                <a href="{{ url_for('admin.manage_links') }}" class="{% if request.endpoint == 'admin.manage_links' %}active{% endif %}">
+                    <i data-lucide="link"></i> Manage Links
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin.manage_collections') }}" class="{% if request.endpoint == 'admin.manage_collections' %}active{% endif %}">
+                    <i data-lucide="folder"></i> Manage Collections
+                </a>
+            </li>
+        </ul>
+        
+        <div class="admin-sidebar-footer">
+            <div class="minion-toggle-container" style="margin-bottom: 15px;">
+                <div class="minion-toggle">
+                    <input type="checkbox" id="themeToggleBtn" class="theme-toggle-input">
+                    <label for="themeToggleBtn">
+                        <span class="thumb"></span>
+                    </label>
+                </div>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="admin-logout">
+                <i data-lucide="log-out"></i> Logout
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <!-- Secondary Page Header -->
+        <div class="page-subheader">
+            <h2 class="page-title">{% block page_title %}Admin Panel / Dashboard{% endblock %}</h2>
+            <div class="page-breadcrumbs">
+                <i data-lucide="home"></i> / Admin / <span>{% block breadcrumb_active %}Dashboard{% endblock %}</span>
+            </div>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="admin-content">
+            <!-- Flash Messages -->
+            <div class="admin-flash">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="admin-alert admin-alert-{{ category }}">
+                                {% if category == 'success' %}<i data-lucide="check-circle"></i>
+                                {% elif category == 'error' or category == 'danger' %}<i data-lucide="alert-circle"></i>
+                                {% else %}<i data-lucide="info"></i>{% endif %}
+                                {{ message }}
+                            </div><br>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+            
+            <!-- Page Content -->
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    </div> <!-- End app-body -->
+
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=9"></script>
+    <script>
+        lucide.createIcons();
+        
+        // Check local storage for theme early to avoid flicker
+        const savedTheme = localStorage.getItem('linkvault-theme');
+        if (savedTheme) {
+            document.body.className = 'admin-body ' + savedTheme;
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.body.className = 'admin-body dark-mode';
+        }
+        
+        // Theme Toggling (Checkbox version)
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        if (themeToggleBtn) {
+            // Initial set based on current theme
+            if (document.body.classList.contains('dark-mode')) {
+                themeToggleBtn.checked = true;
+            }
+            
+            themeToggleBtn.addEventListener('change', function() {
+                if (themeToggleBtn.checked) {
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('linkvault-theme', 'dark-mode');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('linkvault-theme', 'light-mode');
+                }
+            });
+        }
+        
+
+    </script>
+</body>
+</html>

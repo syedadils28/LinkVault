@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkVault - Secure Link Management & Storage</title>
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='img/tab_logo.jpg') }}">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <!-- QR Code Generator Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        vault: {
+                            bg: '#0B1120',
+                            card: '#131C31',
+                            border: '#1E293B',
+                            accent: '#00F2FE',
+                            glow: '#4FACFE',
+                            silver: '#94A3B8'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 15px rgba(0, 242, 254, 0.3)' },
+                            '100%': { boxShadow: '0 0 30px rgba(0, 242, 254, 0.8)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        html {
+            scroll-behavior: smooth;
+            scroll-snap-type: y proximity;
+        }
+
+        section[id] {
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+        }
+
+        /* Custom Glassmorphism styles */
+        .glass-panel {
+            background: rgba(19, 28, 49, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 242, 254, 0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(0, 242, 254, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(0, 242, 254, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #FFFFFF 0%, #00F2FE 50%, #4FACFE 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .text-accent-gradient {
+            background: linear-gradient(135deg, #00F2FE 0%, #4FACFE 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0B1120;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #1E293B;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00F2FE;
+        }
+
+        /* Custom Eye Theme Toggle */
+        .eye-theme-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .eye-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: color 0.4s;
+        }
+
+        .eye-label.off-label {
+            color: #fcd34d;
+        }
+
+        .eye-label.on-label {
+            color: #0f172a;
+        }
+
+        .dark .eye-label.off-label {
+            color: #0f172a;
+        }
+
+        .dark .eye-label.on-label {
+            color: #f59e0b;
+        }
+
+        .eye-toggle {
+            display: inline-block;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .eye-toggle input {
+            display: none;
+        }
+
+        .eye-track {
+            width: 60px;
+            height: 30px;
+            background-color: #fcd34d;
+            border-radius: 20px;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border: 2px solid #fbbf24;
+        }
+
+        .dark .eye-track {
+            background-color: #1e293b;
+            border-color: #0f172a;
+        }
+
+        .eye-thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 22px;
+            height: 22px;
+            background-color: white;
+            border-radius: 50%;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .dark .eye-thumb {
+            transform: translateX(30px);
+        }
+
+        .eye-pupil {
+            position: absolute;
+            width: 7px;
+            height: 7px;
+            background-color: #0f172a;
+            border-radius: 50%;
+            top: 6px;
+            left: 12px;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .eye-pupil::after {
+            content: '';
+            position: absolute;
+            top: 1px;
+            right: 1px;
+            width: 2px;
+            height: 2px;
+            background-color: white;
+            border-radius: 50%;
+        }
+
+        .dark .eye-pupil {
+            top: 12px;
+            left: 3px;
+            width: 6px;
+            height: 6px;
+        }
+
+        .eye-lid {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 32px;
+            height: 18px;
+            background-color: #f1f5f9;
+            border-bottom: 1.5px solid #cbd5e1;
+            transform: translateY(-20px) rotate(0deg);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform-origin: top;
+        }
+
+        .dark .eye-lid {
+            transform: rotate(12deg);
+        }
+
+        /* Light Mode Overrides */
+        html:not(.dark) body {
+            background-color: #f8fafc !important;
+            color: #0f172a !important;
+        }
+
+        html:not(.dark) .glass-panel,
+        html:not(.dark) .glass-card {
+            background: rgba(255, 255, 255, 0.7) !important;
+            border-color: rgba(0, 0, 0, 0.1) !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+        }
+
+        html:not(.dark) .glass-card:hover {
+            border-color: rgba(14, 165, 233, 0.5) !important;
+            box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.2), 0 4px 6px -2px rgba(14, 165, 233, 0.1) !important;
+        }
+
+        html:not(.dark) .text-white {
+            color: #0f172a !important;
+        }
+
+        html:not(.dark) .text-slate-100,
+        html:not(.dark) .text-slate-200,
+        html:not(.dark) .text-slate-300 {
+            color: #334155 !important;
+        }
+
+        html:not(.dark) .text-slate-400,
+        html:not(.dark) .text-slate-500 {
+            color: #64748b !important;
+        }
+
+        html:not(.dark) .bg-slate-900,
+        html:not(.dark) .bg-slate-950 {
+            background-color: #ffffff !important;
+        }
+
+        html:not(.dark) .bg-slate-800 {
+            background-color: #f1f5f9 !important;
+        }
+
+        html:not(.dark) .border-slate-800,
+        html:not(.dark) .border-slate-700 {
+            border-color: #e2e8f0 !important;
+        }
+
+        html:not(.dark) header,
+        html:not(.dark) footer {
+            background-color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        /* Custom Mouse Cursor */
+        @media (pointer: fine) {
+
+            body,
+            a,
+            button,
+            input,
+            select,
+            textarea,
+            .cursor-pointer,
+            label {
+                cursor: none !important;
+            }
+
+            .custom-cursor-dot {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 8px;
+                height: 8px;
+                background-color: #ef4444;
+                box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 9999;
+                transition: width 0.2s, height 0.2s, background-color 0.2s, opacity 0.2s;
+            }
+
+            .custom-cursor-ring {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 36px;
+                height: 36px;
+                border: 1.5px solid rgba(0, 242, 254, 0.5);
+                box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 9998;
+                transition: width 0.2s ease-out, height 0.2s ease-out, background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+            }
+
+            html:not(.dark) .custom-cursor-dot {
+                background-color: #dc2626;
+                box-shadow: none;
+            }
+
+            html:not(.dark) .custom-cursor-ring {
+                border-color: rgba(8, 145, 178, 0.6);
+                box-shadow: none;
+            }
+        }
+
+        @media (pointer: coarse) {
+
+            .custom-cursor-dot,
+            .custom-cursor-ring {
+                display: none !important;
+            }
+        }
+
+        /* Marquee Animation */
+        @keyframes scrollMarquee {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(calc(-100% / 3));
+            }
+        }
+
+        @keyframes scrollMarqueeReverse {
+            0% {
+                transform: translateX(calc(-100% / 3));
+            }
+
+            100% {
+                transform: translateX(0);
+            }
+        }
+
+        .animate-marquee {
+            animation: scrollMarquee 35s linear infinite;
+        }
+
+        .animate-marquee-reverse {
+            animation: scrollMarqueeReverse 45s linear infinite;
+        }
+
+        .animate-marquee:hover,
+        .animate-marquee-reverse:hover {
+            animation-play-state: paused;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-[#0B1120] text-slate-100 font-sans antialiased overflow-x-hidden selection:bg-cyan-500 selection:text-black">
+
+    <!-- Interactive Background Canvas -->
+    <canvas id="cyberCanvas" class="fixed top-0 left-0 w-full h-full pointer-events-none z-0 opacity-40"></canvas>
+
+    <!-- Navigation Bar -->
+
+    <!-- Floating Pill Navigation Bar -->
+    <nav id="navbar"
+        class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-7xl px-8 bg-transparent border border-transparent rounded-full px-6 py-3 flex items-center justify-between transition-all duration-500">
+
+        <!-- Logo -->
+        <a href="#home" class="flex items-center gap-3 group">
+            <img src="{{ url_for('static', filename='img/logo2.png') }}" alt="LinkVault Logo"
+                class="w-12 h-12 rounded-full border-[3px] border-cyan-400 object-cover shadow-[0_0_15px_rgba(0,242,254,0.5)] transition-all group-hover:scale-110 group-hover:shadow-[0_0_25px_rgba(0,242,254,0.8)]">
+            <span class="text-2xl font-extrabold tracking-wide font-sans flex items-center">
+                <span class="text-red-500">LINK</span><span class="text-cyan-400">VAULT</span>
+            </span>
+        </a>
+
+        <!-- Links -->
+        <div class="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-200">
+            <a href="#home" class="flex items-center gap-1.5 text-cyan-400"><i class="fa-solid fa-house"></i> Home</a>
+            <a href="#about" class="flex items-center gap-1.5 hover:text-cyan-400 transition-colors"><i
+                    class="fa-regular fa-user"></i> About</a>
+            <a href="#features" class="flex items-center gap-1.5 hover:text-cyan-400 transition-colors"><i
+                    class="fa-solid fa-briefcase"></i> Features</a>
+            <a href="#contact" class="flex items-center gap-1.5 hover:text-cyan-400 transition-colors"><i
+                    class="fa-regular fa-envelope"></i> Contact</a>
+        </div>
+
+        <!-- Actions -->
+        <div class="hidden lg:flex items-center gap-4">
+            <a href="{{ url_for('auth.login') }}"
+                class="px-4 py-2 rounded-xl bg-slate-800/80 border border-slate-600 hover:border-slate-400 text-sm font-semibold text-white transition-all flex items-center gap-2">
+                <i class="fa-regular fa-user"></i> User Login
+            </a>
+
+            <a href="{{ url_for('auth.admin_login') }}"
+                class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-sm font-bold text-white shadow-[0_0_15px_rgba(239,68,68,0.4)] transition-all flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved"></i> Admin Login
+            </a>
+
+            <!-- Theme Toggle -->
+            <div class="eye-theme-wrapper flex ml-2">
+                <span class="eye-label off-label hidden lg:inline">OFF</span>
+                <label class="eye-toggle">
+                    <input type="checkbox" id="themeCheckbox">
+                    <div class="eye-track">
+                        <div class="eye-thumb">
+                            <div class="eye-pupil"></div>
+                            <div class="eye-lid"></div>
+                        </div>
+                    </div>
+                </label>
+                <span class="eye-label on-label hidden lg:inline">ON</span>
+            </div>
+        </div>
+
+    </nav>
+
+
+    <!-- HERO SECTION -->
+    <section id="home"
+        class="relative z-10 pt-32 pb-24 lg:pt-40 lg:pb-32 overflow-hidden min-h-[100vh] flex flex-col justify-center">
+        <!-- Background Ambient Glow -->
+        <div
+            class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none">
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-12 gap-12 items-center">
+
+                <!-- Left Hero Text -->
+                <div class="lg:col-span-7 space-y-8 text-center lg:text-left">
+                    <div
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-cyan-500/30 text-xs font-mono text-cyan-300">
+                        <span class="flex h-2 w-2 relative">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                        </span>
+                        Next-Gen Link Security v2.4 Release
+                    </div>
+
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-none">
+                        Digitalization of <br>
+                        <span class="text-gradient">Link Vault System</span>
+                    </h1>
+
+                    <p class="text-slate-300 text-lg sm:text-xl max-w-2xl font-light leading-relaxed mx-auto lg:mx-0">
+                        "Digitizing Link Saving for a Safer Tomorrow." Save, organize, encrypt, and instantly access all
+                        your critical web bookmarks inside an immutable, zero-knowledge security vault.
+                    </p>
+
+                    <!-- CTA Buttons -->
+                    <div class="flex flex-wrap gap-4 justify-center lg:justify-start pt-2">
+                        <a href="{{ url_for('auth.register') }}"
+                            class="px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 text-slate-950 font-extrabold text-base shadow-[0_0_30px_rgba(0,242,254,0.4)] hover:shadow-[0_0_40px_rgba(0,242,254,0.7)] hover:scale-[1.02] transition-all duration-300 flex items-center gap-3">
+                            Lock Your First Link <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                        <a href="#features"
+                            class="px-8 py-4 rounded-xl glass-panel border border-slate-700 hover:border-cyan-500/50 text-slate-200 font-semibold text-base hover:bg-slate-800/50 transition-all duration-300 flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-cyan-400"></i> Explore Features
+                        </a>
+                    </div>
+
+                    <!-- Social Networks Row -->
+                    <div
+                        class="pt-8 mt-8 border-t border-slate-800/50 flex items-center justify-center lg:justify-start gap-6">
+
+                        <!-- LinkedIn -->
+                        <div class="relative group">
+                            <div
+                                class="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-blue-500 text-white text-[11px] font-bold rounded-md opacity-0 group-hover:opacity-100 group-hover:-translate-y-1 transition-all duration-300 pointer-events-none whitespace-nowrap z-20 shadow-[0_4px_10px_rgba(59,130,246,0.4)]">
+                                LinkedIn
+                                <div
+                                    class="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-blue-500">
+                                </div>
+                            </div>
+                            <a href="https://www.linkedin.com/in/syed-adil-s28/" target="_blank"
+                                class="w-12 h-12 rounded-full bg-slate-800/60 border border-slate-700/50 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-blue-500 group-hover:border-blue-500 group-hover:ring-1 group-hover:ring-cyan-400 group-hover:ring-offset-[6px] group-hover:ring-offset-[#0B1120] group-hover:shadow-[0_0_25px_rgba(34,211,238,0.3)] transition-all duration-300 relative">
+                                <i class="fa-brands fa-linkedin-in text-lg"></i>
+                            </a>
+                        </div>
+
+                        <!-- GitHub -->
+                        <div class="relative group">
+                            <div
+                                class="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-200 text-slate-900 text-[11px] font-bold rounded-md opacity-0 group-hover:opacity-100 group-hover:-translate-y-1 transition-all duration-300 pointer-events-none whitespace-nowrap z-20 shadow-[0_4px_10px_rgba(226,232,240,0.4)]">
+                                GitHub
+                                <div
+                                    class="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-slate-200">
+                                </div>
+                            </div>
+                            <a href="https://github.com/syedadils28" target="_blank"
+                                class="w-12 h-12 rounded-full bg-slate-800/60 border border-slate-700/50 flex items-center justify-center text-slate-400 group-hover:text-slate-900 group-hover:bg-slate-200 group-hover:border-slate-200 group-hover:ring-1 group-hover:ring-cyan-400 group-hover:ring-offset-[6px] group-hover:ring-offset-[#0B1120] group-hover:shadow-[0_0_25px_rgba(34,211,238,0.3)] transition-all duration-300 relative">
+                                <i class="fa-brands fa-github text-lg"></i>
+                            </a>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="relative group">
+                            <div
+                                class="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-teal-500 text-white text-[11px] font-bold rounded-md opacity-0 group-hover:opacity-100 group-hover:-translate-y-1 transition-all duration-300 pointer-events-none whitespace-nowrap z-20 shadow-[0_4px_10px_rgba(20,184,166,0.4)]">
+                                Email
+                                <div
+                                    class="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-teal-500">
+                                </div>
+                            </div>
+                            <a href="mailto:sacoderdev@gmail.com"
+                                class="w-12 h-12 rounded-full bg-slate-800/60 border border-slate-700/50 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-teal-500 group-hover:border-teal-500 group-hover:ring-1 group-hover:ring-cyan-400 group-hover:ring-offset-[6px] group-hover:ring-offset-[#0B1120] group-hover:shadow-[0_0_25px_rgba(34,211,238,0.3)] transition-all duration-300 relative">
+                                <i class="fa-solid fa-envelope text-lg"></i>
+                            </a>
+                        </div>
+
+                        <!-- Portfolio -->
+                        <div class="relative group">
+                            <div
+                                class="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-yellow-500 text-slate-900 text-[11px] font-bold rounded-md opacity-0 group-hover:opacity-100 group-hover:-translate-y-1 transition-all duration-300 pointer-events-none whitespace-nowrap z-20 shadow-[0_4px_10px_rgba(234,179,8,0.4)]">
+                                Portfolio
+                                <div
+                                    class="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-yellow-500">
+                                </div>
+                            </div>
+                            <a href="https://sacoderportfolio.netlify.app/" target="_blank"
+                                class="w-12 h-12 rounded-full bg-slate-800/60 border border-slate-700/50 flex items-center justify-center text-slate-400 group-hover:border-yellow-500 group-hover:ring-1 group-hover:ring-cyan-400 group-hover:ring-offset-[6px] group-hover:ring-offset-[#0B1120] group-hover:shadow-[0_0_25px_rgba(34,211,238,0.3)] transition-all duration-300 relative overflow-hidden">
+                                <img src="{{ url_for('static', filename='img/portfolio_logo.png') }}" alt="Portfolio Logo" class="w-full h-full object-cover rounded-full scale-110">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Hero Interactive Quick-Lock Widget -->
+                <div class="lg:col-span-5 relative">
+                    <div
+                        class="glass-panel p-6 sm:p-8 rounded-3xl border border-cyan-500/30 shadow-[0_0_50px_rgba(0,242,254,0.15)] relative overflow-hidden">
+                        <!-- Corner Tech Accents -->
+                        <div
+                            class="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-cyan-500/20 to-transparent pointer-events-none">
+                        </div>
+
+                        <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-800">
+                            <div class="flex items-center gap-3">
+                                <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                                <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+                                <span class="text-xs font-mono text-slate-400 ml-2">quick_vault_terminal.sh</span>
+                            </div>
+                            <span
+                                class="text-xs font-mono text-cyan-400 bg-cyan-950/60 border border-cyan-800/60 px-2.5 py-1 rounded-md">AES-256</span>
+                        </div>
+
+                        <form id="quickAddForm" onsubmit="handleQuickAdd(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-mono text-slate-300 mb-1.5 uppercase">Enter Web
+                                    URL</label>
+                                <div class="relative">
+                                    <span
+                                        class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                                        <i class="fa-solid fa-link"></i>
+                                    </span>
+                                    <input type="url" id="quickUrl" placeholder="https://sacoderportfolio.netlify.app/"
+                                        required
+                                        class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700/80 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all font-mono">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-mono text-slate-300 mb-1.5 uppercase">Title /
+                                        Name</label>
+                                    <input type="text" id="quickTitle" placeholder="SA_Coder_Dev" required
+                                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-all font-sans">
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-mono text-slate-300 mb-1.5 uppercase">Category</label>
+                                    <select id="quickCategory"
+                                        class="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-cyan-400 transition-all font-sans">
+                                        <option value="None">Select Category</option>
+                                        <option value="Dev">Developer</option>
+                                        <option value="Finance">Finance</option>
+                                        <option value="Work">Work</option>
+                                        <option value="Personal">Personal</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit"
+                                class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-bold text-sm hover:from-cyan-300 hover:to-blue-400 transition-all shadow-[0_0_20px_rgba(0,242,254,0.3)] flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-lock"></i> Lock in Vault
+                            </button>
+                        </form>
+
+                        <!-- Added Link Preview Card -->
+                        <div class="mt-6 pt-4 border-t border-slate-800">
+                            <div
+                                class="text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-2 flex justify-between">
+                                <span>Recent Vault Entry</span>
+                                <span class="text-emerald-400"><i class="fa-solid fa-shield"></i> Encrypted</span>
+                            </div>
+                            <div id="quickRecentContainer"
+                                class="bg-slate-900/90 border border-cyan-500/30 p-3.5 rounded-xl flex items-center justify-between">
+                                <div class="flex items-center gap-3 overflow-hidden">
+                                    <div
+                                        class="w-8 h-8 rounded-lg bg-cyan-950 text-cyan-400 flex items-center justify-center flex-shrink-0 border border-cyan-800">
+                                        <i class="fa-solid fa-vault"></i>
+                                    </div>
+                                    <div class="truncate">
+                                        <div id="quickRecentTitle" class="text-xs font-bold text-white truncate">
+                                            SA_coder_Dev</div>
+                                        <div id="quickRecentUrl" class="text-[11px] font-mono text-slate-400 truncate">
+                                            https://sacoderportfolio.netlify.app/</div>
+                                    </div>
+                                </div>
+                                <span id="quickRecentBadge"
+                                    class="text-[10px] px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-mono">
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Bouncing Down Arrow -->
+            <div id="scrollArrow"
+                class="absolute bottom-20 lg:bottom-24 left-1/2 -translate-x-1/2 flex justify-center z-20 transition-opacity duration-500">
+                <a href="#about"
+                    class="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center animate-bounce shadow-[0_0_20px_rgba(239,68,68,0.5)] transition-all duration-300">
+                    <i class="fa-solid fa-arrow-down"></i>
+                </a>
+            </div>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section id="about"
+        class="relative z-10 pt-32 pb-48 border-b border-slate-800/50 min-h-[100vh] flex flex-col justify-start">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div class="grid lg:grid-cols-2 gap-16 items-start">
+                <!-- Left: Visual/Graphic -->
+                <div class="relative group mt-0 lg:mt-12" data-animate="true">
+                    <div
+                        class="absolute inset-0 bg-cyan-500/20 blur-[100px] rounded-full group-hover:bg-cyan-400/30 transition-all duration-700">
+                    </div>
+                    <div
+                        class="relative glass-panel p-8 md:p-10 rounded-3xl border border-slate-700/80 shadow-[0_0_30px_rgba(0,242,254,0.1)] overflow-hidden">
+                        <!-- Abstract UI visual -->
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                                <div class="flex gap-2">
+                                    <div
+                                        class="w-3 h-3 rounded-full bg-red-500/80 hover:bg-red-400 cursor-pointer transition-colors">
+                                    </div>
+                                    <div
+                                        class="w-3 h-3 rounded-full bg-yellow-500/80 hover:bg-yellow-400 cursor-pointer transition-colors">
+                                    </div>
+                                    <div
+                                        class="w-3 h-3 rounded-full bg-green-500/80 hover:bg-green-400 cursor-pointer transition-colors">
+                                    </div>
+                                </div>
+                                <div class="text-[10px] font-mono text-slate-500">linkvault.io/system</div>
+                            </div>
+                            <div
+                                class="mt-4 p-4 rounded-xl bg-slate-900/80 border border-cyan-500/30 flex items-center gap-4 group-hover:border-cyan-400/50 transition-all duration-300">
+                                <div
+                                    class="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
+                                    <i class="fa-solid fa-shield-halved text-lg"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold text-white">Zero-Knowledge Architecture</div>
+                                    <div class="text-xs text-slate-400 font-mono mt-1">Status: Encrypted & Secured</div>
+                                </div>
+                            </div>
+                            <div
+                                class="mt-4 p-4 rounded-xl bg-slate-900/80 border border-slate-700/50 flex items-center gap-4">
+                                <div
+                                    class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20">
+                                    <i class="fa-solid fa-bolt text-lg"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold text-white">Lightning Fast Sync</div>
+                                    <div class="text-xs text-slate-400 font-mono mt-1">Latency: 0.02ms</div>
+                                </div>
+                            </div>
+                            <div
+                                class="mt-4 p-4 rounded-xl bg-slate-900/80 border border-slate-700/50 flex items-center gap-4 group-hover:border-purple-500/30 transition-all duration-300">
+                                <div
+                                    class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 border border-purple-500/20">
+                                    <i class="fa-solid fa-globe text-lg"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold text-white">Global Accessibility</div>
+                                    <div class="text-xs text-slate-400 font-mono mt-1">Uptime: 99.99%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Text Content -->
+                <div class="space-y-8" data-animate="true">
+                    <div>
+                        <h3 class="text-cyan-400 font-mono tracking-widest text-sm mb-3 uppercase">About The Project
+                        </h3>
+                        <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-6 leading-tight">Securing the Web's
+                            <br /><span
+                                class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Knowledge
+                                Architecture</span>
+                        </h2>
+                        <p class="text-slate-400 text-lg leading-relaxed">
+                            LinkVault was born out of a simple necessity: the modern web is chaotic, and finding,
+                            saving, and securing important information shouldn't be.
+                        </p>
+                    </div>
+
+                    <div class="space-y-4 text-slate-400 text-base leading-relaxed">
+                        <p>
+                            We built this platform for developers, researchers, and creators who need more than just a
+                            browser bookmark manager. We engineered a robust, high-performance vault that encrypts your
+                            data client-side before it ever reaches our servers.
+                        </p>
+                        <p>
+                            Whether you are saving complex documentation, curating design inspiration, or hoarding
+                            coding recipes, LinkVault ensures your digital footprint remains organized, instantly
+                            accessible, and completely private.
+                        </p>
+                    </div>
+
+                    <div class="pt-1 mb-16 flex gap-4">
+                        <a href="#features"
+                            class="px-6 py-3 rounded-xl bg-slate-800 text-white font-bold text-sm hover:bg-slate-700 border border-slate-700 hover:border-slate-500 transition-all shadow-sm flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group"></i> Explore Features
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- INTERACTIVE TAGS MARQUEE -->
+    <section class="relative z-10 py-16 overflow-hidden border-y border-slate-800/80 bg-slate-900/30 backdrop-blur-sm">
+        <!-- Fade Edges -->
+        <div
+            class="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#0B1120] to-transparent z-10 pointer-events-none">
+        </div>
+        <div
+            class="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#0B1120] to-transparent z-10 pointer-events-none">
+        </div>
+
+        <!-- Row 1: Left to Right -->
+        <div class="flex whitespace-nowrap animate-marquee w-max mb-6">
+            <div class="flex items-center gap-6 px-3">
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#News</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#WebDev</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Inspiration</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#React</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Python</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#UI/UX</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Design</span>
+            </div>
+            <!-- Duplicate -->
+            <div class="flex items-center gap-6 px-3">
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#News</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#WebDev</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Inspiration</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#React</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Python</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#UI/UX</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Design</span>
+            </div>
+            <!-- Triplicate -->
+            <div class="flex items-center gap-6 px-3">
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#News</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#WebDev</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Inspiration</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#React</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Python</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#UI/UX</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Design</span>
+            </div>
+        </div>
+
+        <!-- Row 2: Right to Left -->
+        <div class="flex whitespace-nowrap animate-marquee-reverse w-max mb-6">
+            <div class="flex items-center gap-6 px-3">
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#OpenSource</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#DataScience</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Articles</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Recipes</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Travel</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-cyan-500/80 bg-cyan-900/40 text-cyan-300 text-sm font-mono shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#CSS</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Tutorials</span>
+            </div>
+            <!-- Duplicate -->
+            <div class="flex items-center gap-6 px-3">
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#OpenSource</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#DataScience</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Articles</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Recipes</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Travel</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-cyan-500/80 bg-cyan-900/40 text-cyan-300 text-sm font-mono shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#CSS</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Tutorials</span>
+            </div>
+            <!-- Triplicate -->
+            <div class="flex items-center gap-6 px-3">
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#OpenSource</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#DataScience</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Articles</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Recipes</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Travel</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-cyan-500/80 bg-cyan-900/40 text-cyan-300 text-sm font-mono shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#CSS</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Tutorials</span>
+            </div>
+        </div>
+
+        <!-- Row 3: Left to Right -->
+        <div class="flex whitespace-nowrap animate-marquee w-max">
+            <div class="flex items-center gap-6 px-3">
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Tech</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#AI</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#MachineLearning</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Next.js</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#GitHub</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Videos</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Music</span>
+            </div>
+            <!-- Duplicate -->
+            <div class="flex items-center gap-6 px-3">
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Tech</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#AI</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#MachineLearning</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Next.js</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#GitHub</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Videos</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Music</span>
+            </div>
+            <!-- Triplicate -->
+            <div class="flex items-center gap-6 px-3">
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Tech</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#AI</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#MachineLearning</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Next.js</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#GitHub</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Videos</span>
+                <span
+                    class="px-5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-mono hover:border-cyan-500 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] transition-all cursor-pointer backdrop-blur-md">#Music</span>
+            </div>
+        </div>
+        </div>
+    </section>
+
+    <!-- FEATURES SECTION -->
+    <section id="features" class="relative z-10 pt-36 pb-24 min-h-[100vh] flex flex-col justify-center">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+                <h2 class="text-xs font-mono text-cyan-400 uppercase tracking-widest">Built for Security & Speed</h2>
+                <h3 class="text-3xl md:text-5xl font-extrabold text-white mb-4 leading-tight">Vault Capabilities & <br
+                        class="hidden sm:block" /><span
+                        class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Core
+                        Features</span></h3>
+                <p class="text-slate-400 text-sm sm:text-base">Designed to streamline how modern developers, teams, and
+                    individuals store and protect their online assets.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Feature 1 -->
+                <div class="glass-card p-6 rounded-2xl relative group">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center text-xl mb-5 group-hover:bg-cyan-500 group-hover:text-black transition-all duration-300">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2">AES-256 Encryption</h4>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Every link URL and note is encrypted client-side before touching our database. Zero knowledge
+                        guarantees.
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="glass-card p-6 rounded-2xl relative group">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center text-xl mb-5 group-hover:bg-cyan-500 group-hover:text-black transition-all duration-300">
+                        <i class="fa-solid fa-tags"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2">Smart Categorization</h4>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Tag, filter, and organize links automatically using intelligent domain detection and custom
+                        categories.
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="glass-card p-6 rounded-2xl relative group">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center text-xl mb-5 group-hover:bg-cyan-500 group-hover:text-black transition-all duration-300">
+                        <i class="fa-solid fa-share-nodes"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2">Timed Expiring Links</h4>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Generate temporary access links or self-destructing bookmarks for safe sharing with team
+                        members.
+                    </p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="glass-card p-6 rounded-2xl relative group">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center text-xl mb-5 group-hover:bg-cyan-500 group-hover:text-black transition-all duration-300">
+                        <i class="fa-solid fa-qrcode"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2">Instant QR Generator</h4>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Transform any saved bookmark into a scannable encrypted QR code instantly for cross-device
+                        mobile sharing.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- QR CODE MODAL -->
+    <div id="qrModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden">
+        <div class="glass-panel p-6 rounded-2xl max-w-sm w-full border border-cyan-500/40 text-center space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-white text-base flex items-center gap-2">
+                    <i class="fa-solid fa-qrcode text-cyan-400"></i> Vault QR Link
+                </h3>
+                <button onclick="closeQrModal()" class="text-slate-400 hover:text-white text-lg"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="qrContainer" class="p-4 bg-white rounded-xl flex items-center justify-center mx-auto shadow-inner">
+            </div>
+            <p id="qrUrlText"
+                class="text-xs font-mono text-cyan-300 truncate bg-slate-950 p-2 rounded-lg border border-slate-800">
+            </p>
+            <button onclick="closeQrModal()"
+                class="w-full py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold">Close Window</button>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast"
+        class="fixed bottom-6 right-6 z-50 glass-panel border border-cyan-400 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 translate-y-20 opacity-0">
+        <i class="fa-solid fa-circle-check text-cyan-400 text-lg"></i>
+        <span id="toastMsg" class="text-xs font-mono font-medium">Link successfully secured!</span>
+    </div>
+
+    <!-- CONTACT SECTION -->
+    <section id="contact"
+        class="relative z-10 pt-36 pb-24 bg-slate-950/50 border-t border-slate-800/50 min-h-[100vh] flex flex-col justify-center">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-16 items-start">
+
+                <!-- Left Column: Info -->
+                <div class="space-y-10">
+                    <div>
+                        <h3 class="text-cyan-400 font-mono tracking-widest text-sm mb-3 uppercase">Connect With Us</h3>
+                        <h2 class="text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight">Get In <span
+                                class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Touch</span>
+                        </h2>
+                        <p class="text-slate-400 text-lg leading-relaxed max-w-md">
+                            Have a project in mind, need support, or want to say hi? We'd love to hear from you.
+                        </p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <!-- Email -->
+                        <div
+                            class="flex items-center gap-5 p-4 rounded-2xl glass-panel border border-slate-800 hover:border-cyan-500/30 transition-all">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-cyan-400 shrink-0">
+                                <i class="fa-solid fa-envelope text-lg"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-mono text-slate-500 uppercase mb-1">Email</h4>
+                                <a href="mailto:sacoderdev@gmail.com"
+                                    class="text-sm font-bold text-white hover:text-cyan-400 transition-colors">sacoderdev@gmail.com</a>
+                            </div>
+                        </div>
+
+                        <!-- Location -->
+                        <div
+                            class="flex items-center gap-5 p-4 rounded-2xl glass-panel border border-slate-800 hover:border-cyan-500/30 transition-all">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-cyan-400 shrink-0">
+                                <i class="fa-solid fa-location-dot text-lg"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-mono text-slate-500 uppercase mb-1">Location</h4>
+                                <p class="text-sm font-bold text-white">Shivamogga, Karnataka, India</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-bold text-white mb-5">Professional Profiles</h4>
+                        <div class="flex items-center gap-6">
+
+                            <!-- LinkedIn -->
+                            <div class="relative group">
+                                <div
+                                    class="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-blue-500 text-white text-[11px] font-bold rounded-md opacity-0 group-hover:opacity-100 group-hover:-translate-y-1 transition-all duration-300 pointer-events-none whitespace-nowrap z-20 shadow-[0_4px_10px_rgba(59,130,246,0.4)]">
+                                    LinkedIn
+                                    <div
+                                        class="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-blue-500">
+                                    </div>
+                                </div>
+                                <a href="https://www.linkedin.com/in/syed-adil-s28/" target="_blank"
+                                    class="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-blue-500 group-hover:border-blue-500 group-hover:ring-1 group-hover:ring-cyan-400 group-hover:ring-offset-[6px] group-hover:ring-offset-[#0B1120] group-hover:shadow-[0_0_25px_rgba(34,211,238,0.3)] transition-all duration-300 relative">
+                                    <i class="fa-brands fa-linkedin-in text-lg"></i>
+                                </a>
+                            </div>
+
+                            <!-- GitHub -->
+                            <div class="relative group">
+                                <div
+                                    class="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-200 text-slate-900 text-[11px] font-bold rounded-md opacity-0 group-hover:opacity-100 group-hover:-translate-y-1 transition-all duration-300 pointer-events-none whitespace-nowrap z-20 shadow-[0_4px_10px_rgba(226,232,240,0.4)]">
+                                    GitHub
+                                    <div
+                                        class="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-slate-200">
+                                    </div>
+                                </div>
+                                <a href="https://github.com/syedadils28" target="_blank"
+                                    class="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-slate-900 group-hover:bg-slate-200 group-hover:border-slate-200 group-hover:ring-1 group-hover:ring-cyan-400 group-hover:ring-offset-[6px] group-hover:ring-offset-[#0B1120] group-hover:shadow-[0_0_25px_rgba(34,211,238,0.3)] transition-all duration-300 relative">
+                                    <i class="fa-brands fa-github text-lg"></i>
+                                </a>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="relative group">
+                                <div
+                                    class="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-teal-500 text-white text-[11px] font-bold rounded-md opacity-0 group-hover:opacity-100 group-hover:-translate-y-1 transition-all duration-300 pointer-events-none whitespace-nowrap z-20 shadow-[0_4px_10px_rgba(20,184,166,0.4)]">
+                                    Email
+                                    <div
+                                        class="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-teal-500">
+                                    </div>
+                                </div>
+                                <a href="mailto:sacoderdev@gmail.com"
+                                    class="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-teal-500 group-hover:border-teal-500 group-hover:ring-1 group-hover:ring-cyan-400 group-hover:ring-offset-[6px] group-hover:ring-offset-[#0B1120] group-hover:shadow-[0_0_25px_rgba(34,211,238,0.3)] transition-all duration-300 relative">
+                                    <i class="fa-solid fa-envelope text-lg"></i>
+                                </a>
+                            </div>
+
+                            <!-- Portfolio -->
+                            <div class="relative group">
+                                <div class="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-yellow-500 text-slate-900 text-[11px] font-bold rounded-md opacity-0 group-hover:opacity-100 group-hover:-translate-y-1 transition-all duration-300 pointer-events-none whitespace-nowrap z-20 shadow-[0_4px_10px_rgba(234,179,8,0.4)]">
+                                    Portfolio
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-yellow-500"></div>
+                                </div>
+                                <a href="https://sacoderportfolio.netlify.app/" target="_blank"
+                                    class="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 group-hover:border-yellow-500 group-hover:ring-1 group-hover:ring-cyan-400 group-hover:ring-offset-[6px] group-hover:ring-offset-[#0B1120] group-hover:shadow-[0_0_25px_rgba(34,211,238,0.3)] transition-all duration-300 relative overflow-hidden">
+                                    <img src="{{ url_for('static', filename='img/portfolio_logo.png') }}" alt="Portfolio Logo" class="w-full h-full object-cover rounded-full scale-110">
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Form -->
+                <div
+                    class="glass-panel p-8 md:p-10 rounded-3xl border border-slate-700/80 shadow-[0_0_30px_rgba(0,242,254,0.05)]">
+                    <div class="flex items-center gap-3 text-cyan-400 font-bold mb-8">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Let's build something great
+                    </div>
+
+                    <script type="text/javascript">
+                        var submitted = false;
+                        function handleFormLoad() {
+                            if (submitted) {
+                                showToast('Message sent successfully! Thanks for reaching out.');
+                                document.getElementById('contactForm').reset();
+                                document.getElementById('contactSubmit').disabled = false;
+                                document.getElementById('contactSubmit').querySelector('span').innerText = 'Send Message';
+                                document.getElementById('contactSubmit').classList.remove('opacity-50', 'cursor-not-allowed');
+                            }
+                        }
+                    </script>
+                    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"
+                        onload="handleFormLoad()"></iframe>
+
+                    <form class="space-y-5" id="contactForm"
+                        action="https://script.google.com/macros/s/AKfycbzmcV7Dsp8g-VScJscvtCHWHwU-_CP6UZ_uuQ9l3PZuUHBdcrOEoScji0UWCAlqCEYY/exec"
+                        method="POST" target="hidden_iframe"
+                        onsubmit="submitted=true; document.getElementById('contactSubmit').disabled=true; document.getElementById('contactSubmit').classList.add('opacity-50', 'cursor-not-allowed'); document.getElementById('contactSubmit').querySelector('span').innerText='Sending...';">
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-xs font-mono text-slate-400 mb-2">Name</label>
+                                <input type="text" name="name"
+                                    class="w-full px-4 py-3.5 bg-slate-900/50 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all font-sans"
+                                    placeholder="Syed Adil , SA_coder_Dev" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-mono text-slate-400 mb-2">Email</label>
+                                <input type="email" name="email"
+                                    class="w-full px-4 py-3.5 bg-slate-900/50 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all font-sans"
+                                    placeholder="sacoderdev@gmail.com" required>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-mono text-slate-400 mb-2">Subject</label>
+                            <input type="text" name="subject"
+                                class="w-full px-4 py-3.5 bg-slate-900/50 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all font-sans"
+                                placeholder="Project Inquiry" required>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-mono text-slate-400 mb-2">Message</label>
+                            <textarea name="message"
+                                class="w-full px-4 py-3.5 bg-slate-900/50 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all font-sans h-32 resize-none"
+                                placeholder="How can we help you?" required></textarea>
+                        </div>
+
+                        <button type="submit" id="contactSubmit"
+                            class="w-full py-4 mt-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(0,242,254,0.3)] hover:shadow-[0_0_25px_rgba(0,242,254,0.5)] flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> <span>Send Message</span>
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer id="footer" class="relative z-10 border-t border-slate-800/80 bg-slate-950/80 pt-10 pb-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <!-- Top Row: Branding & Copyright -->
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-slate-800/60">
+                <!-- Left Side: Brand & Socials -->
+                <div class="flex flex-col sm:flex-row items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <img src="{{ url_for('static', filename='img/logo2.png') }}" alt="SA_Coder Logo"
+                            class="w-8 h-8 rounded-lg object-cover shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+                        <div class="text-sm font-bold text-white">SA_Coder <span class="text-slate-500 font-normal">—
+                                Developer</span></div>
+                    </div>
+
+                    <div class="w-px h-5 bg-slate-800 mx-2 hidden sm:block"></div>
+
+                    <div class="flex items-center gap-2">
+                        <a href="https://github.com/syedadils28" target="_blank"
+                            class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-600 transition-all cursor-pointer">
+                            <i class="fa-brands fa-github text-sm"></i>
+                        </a>
+                        <a href="https://www.linkedin.com/in/syed-adil-s28/" target="_blank"
+                            class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-blue-400 hover:border-blue-500/50 transition-all cursor-pointer">
+                            <i class="fa-brands fa-linkedin-in text-sm"></i>
+                        </a>
+                        <a href="mailto:sacoderdev@gmail.com"
+                            class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all cursor-pointer">
+                            <i class="fa-solid fa-envelope text-sm"></i>
+                        </a>
+                        <a href="https://sacoderportfolio.netlify.app/" target="_blank"
+                            class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center hover:border-yellow-500/50 transition-all cursor-pointer overflow-hidden group">
+                            <img src="{{ url_for('static', filename='img/portfolio_logo.png') }}" alt="Portfolio Logo" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity">
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right Side: Copyright -->
+                <div class="text-xs text-slate-400 flex items-center gap-2">
+                    &copy; 2026 SA_Coder. All rights reserved.
+                    <span class="text-slate-700 mx-1">•</span>
+                    Built with <i class="fa-solid fa-heart text-red-500 mx-0.5"></i> Flask
+                </div>
+            </div>
+
+            <!-- Bottom Row: Navigation -->
+            <div class="pt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
+                <a href="#home"
+                    class="text-sm text-slate-400 hover:text-cyan-400 transition-colors font-mono lowercase">home</a>
+                <a href="#about"
+                    class="text-sm text-slate-400 hover:text-cyan-400 transition-colors font-mono lowercase">about</a>
+                <a href="#features"
+                    class="text-sm text-slate-400 hover:text-cyan-400 transition-colors font-mono lowercase">features</a>
+                <a href="#contact"
+                    class="text-sm text-slate-400 hover:text-cyan-400 transition-colors font-mono lowercase">contact</a>
+                <a href="/login"
+                    class="text-sm text-slate-400 hover:text-cyan-400 transition-colors font-mono lowercase">login</a>
+                <a href="/register"
+                    class="text-sm text-slate-400 hover:text-cyan-400 transition-colors font-mono lowercase">register</a>
+            </div>
+
+        </div>
+    </footer>
+
+    <script>
+        // Interactive Canvas Particle Matrix Background
+        const canvas = document.getElementById('cyberCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const particles = [];
+        const particleCount = 45;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.radius = Math.random() * 1.5 + 1;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#00F2FE';
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach((p, index) => {
+                p.update();
+                p.draw();
+
+                for (let j = index + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if (dist < 130) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `rgba(0, 242, 254, ${1 - dist / 130 * 0.8})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            });
+
+            requestAnimationFrame(animateCanvas);
+        }
+        animateCanvas();
+
+        // Mobile Menu Toggle
+        const mobileBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        mobileBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Sample Initial Vault Data State
+        let defaultLinks = [
+            { id: 1, title: 'GitHub Security Settings', url: 'https://github.com/settings/security', category: 'Dev', locked: true, created: '2026-03-20' },
+            { id: 2, title: 'Stripe Merchant Dashboard', url: 'https://dashboard.stripe.com', category: 'Finance', locked: true, created: '2026-03-21' },
+            { id: 3, title: 'Internal Jira Board', url: 'https://atlassian.net/jira/projects', category: 'Work', locked: false, created: '2026-03-22' },
+            { id: 4, title: 'AWS Cloud Console', url: 'https://console.aws.amazon.com', category: 'Dev', locked: true, created: '2026-03-23' },
+            { id: 5, title: 'Crypto Wallet Manager', url: 'https://app.safe.global', category: 'Finance', locked: true, created: '2026-03-24' }
+        ];
+
+        // Add Quick Link Handler
+        function handleQuickAdd(e) {
+            e.preventDefault();
+            const url = document.getElementById('quickUrl').value;
+            const title = document.getElementById('quickTitle').value;
+            const category = document.getElementById('quickCategory').value;
+
+            // Update Quick Recent Box
+            document.getElementById('quickRecentTitle').innerText = title;
+            document.getElementById('quickRecentUrl').innerText = url;
+            document.getElementById('quickRecentBadge').innerText = category;
+
+            // Reset Form
+            document.getElementById('quickUrl').value = '';
+            document.getElementById('quickTitle').value = '';
+
+            showToast(`Encrypted & Saved: ${title}`);
+        }
+
+        // Toast System
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toastMsg');
+            msg.innerText = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Initial Render On Load
+        window.onload = function () {
+            // Nothing to do on load
+        }
+    </script>
+
+    <script>
+        // Theme Toggle Logic
+        const themeCheckbox = document.getElementById('themeCheckbox');
+        const html = document.documentElement;
+
+        // Check Local Storage
+        if (localStorage.getItem('theme') === 'light') {
+            html.classList.remove('dark');
+            if (themeCheckbox) themeCheckbox.checked = false;
+        } else {
+            html.classList.add('dark'); // Default to dark
+            if (themeCheckbox) themeCheckbox.checked = true;
+        }
+
+        if (themeCheckbox) {
+            themeCheckbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    html.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    html.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        }
+    </script>
+
+    <!-- Circular Scroll to Top Button -->
+    <div id="scrollToTopBtn"
+        class="fixed bottom-8 right-8 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-500 cursor-pointer group hover:scale-105"
+        onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <svg class="w-14 h-14 -rotate-90 drop-shadow-lg" viewBox="0 0 100 100">
+            <!-- Background track -->
+            <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="8"
+                class="text-slate-700/50" />
+            <!-- Progress ring -->
+            <circle id="scrollProgressRing" cx="50" cy="50" r="45" fill="none" stroke="#10b981" stroke-width="8"
+                stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="283"
+                class="transition-all duration-150" />
+        </svg>
+        <!-- Inner Button -->
+        <div
+            class="absolute inset-0 m-auto w-10 h-10 rounded-full bg-blue-700 hover:bg-blue-600 flex items-center justify-center text-white shadow-[0_0_15px_rgba(29,78,216,0.4)] transition-colors">
+            <i class="fa-solid fa-arrow-up"></i>
+        </div>
+    </div>
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.remove('bg-transparent', 'border-transparent');
+                navbar.classList.add('bg-[#131C31]/95', 'backdrop-blur-xl', 'border-slate-700/50', 'shadow-2xl');
+            } else {
+                navbar.classList.add('bg-transparent', 'border-transparent');
+                navbar.classList.remove('bg-[#131C31]/95', 'backdrop-blur-xl', 'border-slate-700/50', 'shadow-2xl');
+            }
+        });
+
+        // Arrow scroll fade effect
+        window.addEventListener('scroll', () => {
+            const arrow = document.getElementById('scrollArrow');
+            if (arrow) {
+                if (window.scrollY > 100) {
+                    arrow.style.opacity = '0';
+                    arrow.style.pointerEvents = 'none';
+                } else {
+                    arrow.style.opacity = '1';
+                    arrow.style.pointerEvents = 'auto';
+                }
+            }
+
+            // Scroll to top progress ring logic
+            const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+            const scrollProgressRing = document.getElementById('scrollProgressRing');
+            const totalLength = 283;
+
+            const scrollPos = window.scrollY;
+            const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+
+            if (scrollToTopBtn) {
+                if (scrollPos > 300) {
+                    scrollToTopBtn.style.opacity = '1';
+                    scrollToTopBtn.style.pointerEvents = 'auto';
+                } else {
+                    scrollToTopBtn.style.opacity = '0';
+                    scrollToTopBtn.style.pointerEvents = 'none';
+                }
+            }
+
+            if (scrollProgressRing && scrollHeight > 0) {
+                const scrollPercent = scrollPos / scrollHeight;
+                const dashOffset = totalLength - (totalLength * scrollPercent);
+                scrollProgressRing.style.strokeDashoffset = dashOffset;
+            }
+        });
+
+        // ScrollSpy Logic for Navbar Highlighting
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('#navbar a[href^="#"]');
+
+            let currentId = 'home';
+
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                // Adjust offset to trigger slightly before it hits the very top
+                if (window.scrollY >= (sectionTop - 250)) {
+                    currentId = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(a => {
+                const href = a.getAttribute('href').substring(1);
+                if (href === currentId) {
+                    a.classList.add('text-cyan-400');
+                    a.classList.remove('text-slate-200');
+                } else if (['home', 'about', 'features', 'contact'].includes(href)) {
+                    a.classList.remove('text-cyan-400');
+                    a.classList.add('text-slate-200');
+                }
+            });
+        });
+
+        // Trigger once on load to set initial state
+        window.addEventListener('DOMContentLoaded', () => {
+            window.dispatchEvent(new Event('scroll'));
+        });
+    </script>
+
+    <!-- Custom Cursor Elements -->
+    <div class="custom-cursor-dot" id="cursorDot"></div>
+    <div class="custom-cursor-ring" id="cursorRing"></div>
+
+    <script>
+        // Custom Smooth Mouse Cursor Logic
+        const cursorDot = document.getElementById('cursorDot');
+        const cursorRing = document.getElementById('cursorRing');
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let ringX = mouseX;
+        let ringY = mouseY;
+
+        if (window.matchMedia("(pointer: fine)").matches) {
+            window.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                cursorDot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%)`;
+            });
+
+            function renderCursor() {
+                ringX += (mouseX - ringX) * 0.15; // LERP for smooth lagging effect
+                ringY += (mouseY - ringY) * 0.15;
+                cursorRing.style.transform = `translate3d(${ringX}px, ${ringY}px, 0) translate(-50%, -50%)`;
+                requestAnimationFrame(renderCursor);
+            }
+            requestAnimationFrame(renderCursor);
+
+            // Add hover effects for all interactive elements
+            const interactiveElements = document.querySelectorAll('a, button, input, select, textarea, .cursor-pointer, label');
+            interactiveElements.forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    cursorDot.style.opacity = '0';
+                    cursorRing.style.width = '72px';
+                    cursorRing.style.height = '72px';
+                    cursorRing.style.backgroundColor = 'rgba(0, 242, 254, 0.15)'; // Cyan tint
+                    cursorRing.style.borderColor = 'rgba(0, 242, 254, 0.6)'; // Cyan border
+                    cursorRing.style.boxShadow = '0 0 25px rgba(0, 242, 254, 0.4)';
+                });
+                el.addEventListener('mouseleave', () => {
+                    cursorDot.style.opacity = '1';
+                    cursorRing.style.width = '36px';
+                    cursorRing.style.height = '36px';
+                    cursorRing.style.backgroundColor = 'transparent';
+                    cursorRing.style.borderColor = 'rgba(0, 242, 254, 0.5)';
+                    cursorRing.style.boxShadow = '0 0 15px rgba(0, 242, 254, 0.2)';
+                    if (!document.documentElement.classList.contains('dark')) {
+                        cursorRing.style.borderColor = 'rgba(8, 145, 178, 0.6)';
+                        cursorRing.style.boxShadow = 'none';
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>

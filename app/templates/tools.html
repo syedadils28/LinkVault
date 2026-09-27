@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Tools - LinkVault{% endblock %}
+{% block page_title %}Tools & Integrations{% endblock %}
+{% block breadcrumb_active %}Tools{% endblock %}
+
+{% block content %}
+<div class="form-container" style="max-width: 800px;">
+    
+    <div style="text-align: center; margin-bottom: 40px;">
+        <div style="width: 60px; height: 60px; background: var(--primary-light); color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+            <i data-lucide="bookmark" style="width: 30px; height: 30px;"></i>
+        </div>
+        <h2 style="margin-bottom: 10px;">Quick-Save Bookmarklet</h2>
+        <p style="color: var(--text-muted);">Save links to your vault instantly without leaving the page you are on.</p>
+    </div>
+
+    <div style="background: var(--bg-surface-hover); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 30px; margin-bottom: 30px;">
+        <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            <i data-lucide="mouse-pointer-click" style="color: var(--primary-color);"></i> 
+            How to install
+        </h3>
+        
+        <ol style="margin-left: 20px; color: var(--text-color); line-height: 1.8;">
+            <li>Make sure your browser's <strong>Bookmarks Bar</strong> is visible (usually <kbd>Ctrl+Shift+B</kbd> or <kbd>Cmd+Shift+B</kbd>).</li>
+            <li>Click and drag the blue button below to your bookmarks bar.</li>
+            <li>When you are on an interesting website, just click the bookmark to instantly save it!</li>
+        </ol>
+        
+        <div style="text-align: center; margin-top: 30px; padding: 20px; background: var(--bg-color); border-radius: var(--radius-md); border: 2px dashed var(--border-color);">
+            <!-- The Bookmarklet Code -->
+            <a href="javascript:(function(){window.open('{{ url_for('links.add_link', _external=True) }}?url='+encodeURIComponent(window.location.href)+'&title='+encodeURIComponent(document.title), '_blank');})();" 
+               class="btn btn-primary" 
+               style="font-size: 1.1rem; padding: 10px 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: grab;"
+               onclick="alert('Please drag this button to your Bookmarks Bar! Do not just click it.'); return false;"
+               title="Drag me to your bookmarks bar!">
+                <i data-lucide="plus-circle"></i> Save to LinkVault
+            </a>
+            
+            <p style="margin-top: 15px; font-size: 0.85rem; color: var(--text-muted);">
+                ↑ Drag this button to your bookmarks bar ↑
+            </p>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}

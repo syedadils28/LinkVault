@@ -1,0 +1,64 @@
+{% extends "admin_base.html" %}
+{% block page_title %}Create Administrator{% endblock %}
+{% block breadcrumb_active %}Create Admin{% endblock %}
+
+{% block content %}
+<div class="admin-card" style="max-width: 600px; margin: 0 auto; margin-top: 20px;">
+    <h2 class="admin-card-title" style="margin-bottom: 20px;"><i data-lucide="user-plus" style="vertical-align: middle; margin-right: 8px;"></i> Create Administrator</h2>
+    <p style="font-size: 0.9rem; color: var(--admin-text-muted); margin-bottom: 20px;">Directly create a new administrator account. They will have full access immediately.</p>
+    
+    <form action="{{ url_for('admin.create_admin') }}" method="POST">
+        <div class="admin-form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" class="admin-form-control" required placeholder="admin_smith">
+        </div>
+        
+        <div class="admin-form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" class="admin-form-control" required placeholder="smith@admin.com">
+        </div>
+        
+        <div class="admin-form-group">
+            <label for="password">Password</label>
+            <div style="position: relative; display: flex; align-items: center;">
+                <input type="password" id="password" name="password" class="admin-form-control" required placeholder="Secure password" style="padding-right: 40px;">
+                <button type="button" id="togglePassword" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: var(--admin-text-muted); padding: 0; display: flex; align-items: center;">
+                    <i data-lucide="eye" id="toggleIcon" style="width: 20px; height: 20px;"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <a href="{{ url_for('admin.dashboard') }}" class="admin-btn" style="background-color: transparent; border: 1px solid var(--admin-border); color: var(--admin-text-main); text-align: center; flex: 1;">
+                Cancel
+            </a>
+            <button type="submit" class="admin-btn admin-btn-primary" style="flex: 2;">
+                <i data-lucide="shield-plus"></i> Create Admin Account
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const togglePassword = document.getElementById('togglePassword');
+        const password = document.getElementById('password');
+        
+        if (togglePassword && password) {
+            togglePassword.addEventListener('click', function (e) {
+                // Toggle the type attribute
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                
+                // Toggle the icon by replacing the innerHTML
+                if (type === 'text') {
+                    togglePassword.innerHTML = '<i data-lucide="eye-off" style="width: 20px; height: 20px;"></i>';
+                } else {
+                    togglePassword.innerHTML = '<i data-lucide="eye" style="width: 20px; height: 20px;"></i>';
+                }
+                lucide.createIcons();
+            });
+        }
+    });
+</script>
+{% endblock %}

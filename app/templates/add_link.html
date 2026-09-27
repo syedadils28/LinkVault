@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Add Link - LinkVault{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-content">
+        <h1>Add New Link</h1>
+        <p>Save a new resource to your vault.</p>
+    </div>
+</div>
+
+<div class="form-container">
+    {% if duplicate %}
+        <div class="alert alert-warning">
+            <div class="alert-icon"><i data-lucide="alert-triangle"></i></div>
+            <div class="alert-content">
+                <h4>This link already exists in your collection.</h4>
+                <p>Saved as: <strong>{{ duplicate.title or duplicate.url }}</strong></p>
+                <div class="alert-actions mt-2">
+                    <a href="{{ url_for('links.edit_link', link_id=duplicate.id) }}" class="btn btn-sm btn-outline">View Existing Link</a>
+                    
+                    <form method="POST" action="{{ url_for('links.add_link') }}" style="display:inline-block;">
+                        <input type="hidden" name="url" value="{{ url }}">
+                        <input type="hidden" name="ignore_duplicate" value="true">
+                        <button type="submit" class="btn btn-sm btn-warning">Save Anyway</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('links.add_link') }}" class="standard-form">
+        <div class="form-group">
+            <label for="url">URL <span class="required">*</span></label>
+            <div class="input-with-button">
+                <input type="url" id="url" name="url" required placeholder="https://..." value="{{ url or '' }}" autofocus>
+                <button type="button" id="fetchMetadataBtn" class="btn btn-secondary">Auto-Fill</button>
+            </div>
+            <small class="form-hint">Click Auto-Fill to automatically fetch the title and description.</small>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group half-width">
+                <label for="title">Title</label>
+                <input type="text" id="title" name="title" class="form-control" placeholder="Page title" value="{{ title or '' }}">
+            </div>
+            
+            <div class="form-group half-width custom-select-wrapper">
+                <label for="link_type">Link Type</label>
+                <select id="link_type" name="link_type">
+                    <option value="Website">Website</option>
+                    <option value="GitHub">GitHub</option>
+                    <option value="Documentation">Documentation</option>
+                    <option value="YouTube">YouTube</option>
+                    <option value="Article">Article</option>
+                    <option value="Research Paper">Research Paper</option>
+                    <option value="AI Tool">AI Tool</option>
+                    <option value="Development Tool">Development Tool</option>
+                    <option value="Repository">Repository</option>
+                    <option value="Course">Course</option>
+                    <option value="Reference">Reference</option>
+                    <option value="Portfolio">Portfolio</option>
+                    <option value="Design">Design</option>
+                    <option value="Social Media">Social Media</option>
+                    <option value="Podcast">Podcast</option>
+                    <option value="Video">Video</option>
+                    <option value="E-commerce">E-commerce</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="3" placeholder="Brief description of this resource..."></textarea>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group half-width">
+                <label for="collection_id">Collection</label>
+                <select id="collection_id" name="collection_id" class="form-control">
+                    <option value="">None (Unorganized)</option>
+                    {% for collection in collections %}
+                        <option value="{{ collection.id }}">{{ collection.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group half-width">
+                <label for="tags">Tags</label>
+                <input type="text" id="tags" name="tags" class="form-control" placeholder="python, tutorial, web (comma separated)">
+            </div>
+        </div>
+        
+        <div class="form-group checkbox-group mt-3">
+            <label class="checkbox-container">
+                <input type="checkbox" name="is_favorite" id="is_favorite">
+                <span class="checkmark"></span>
+                Mark as Favorite
+            </label>
+        </div>
+        
+        <div class="form-actions mt-4">
+            <a href="{{ url_for('links.view_links') }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Link</button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fetchBtn = document.getElementById('fetchMetadataBtn');
+    const urlInput = document.getElementById('url');
+    
+    if (fetchBtn && urlInput) {
+        fetchBtn.addEventListener('click', function() {
+            const url = urlInput.value;
+            if (!url || !url.startsWith('http')) {
+                alert('Please enter a valid URL starting with http:// or https://');
+                return;
+            }
+            
+            fetchBtn.innerHTML = '<i data-lucide="loader" class="spin"></i> Fetching...';
+            lucide.createIcons();
+            fetchBtn.disabled = true;
+            
+            fetch('/api/fetch-metadata', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.title) document.getElementById('title').value = data.title;
+                if (data.description) document.getElementById('description').value = data.description;
+                if (data.link_type) {
+                    const select = document.getElementById('link_type');
+                    for (let i = 0; i < select.options.length; i++) {
+                        if (select.options[i].value === data.link_type) {
+                            select.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                fetchBtn.innerHTML = 'Auto-Fill';
+                fetchBtn.disabled = false;
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

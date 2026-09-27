@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - LinkVault{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-content">
+        {% if current_user.is_authenticated %}
+        <h1>Welcome, {{ current_user.username }}! 👋</h1>
+        <p>Here's an overview of your link collections.</p>
+        {% else %}
+        <h1>Welcome to LinkVault! 👋</h1>
+        <p>Log in or sign up to start saving and organizing your links.</p>
+        {% endif %}
+    </div>
+    <div class="header-actions">
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('links.add_link') }}" class="btn btn-primary">
+            <i data-lucide="plus"></i> Add Link
+        </a>
+        {% else %}
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary">
+            <i data-lucide="user-plus"></i> Sign Up
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon bg-primary-light text-primary">
+            <i data-lucide="link"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ total_links }}</h3>
+            <p>Total Links</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-success-light text-success">
+            <i data-lucide="folder"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ collections_count }}</h3>
+            <p>Collections</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-warning-light text-warning">
+            <i data-lucide="star"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ favorites_count }}</h3>
+            <p>Favorites</p>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Recent Links Section -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>Recently Added</h2>
+            <a href="{{ url_for('links.view_links') }}" class="text-link">View All</a>
+        </div>
+        
+        {% if recent_links %}
+            <div class="link-list-compact">
+                {% for link in recent_links %}
+                <div class="link-item">
+                    <div class="link-icon {{ link.link_type | lower | replace(' ', '-') }}">
+                        <i data-lucide="{{ get_icon_for_type(link.link_type) }}"></i>
+                    </div>
+                    <div class="link-details">
+                        <h4><a href="{{ link.url }}" target="_blank">{{ link.title or link.url }}</a></h4>
+                        <div class="link-meta">
+                            <span>{{ link.link_type }}</span>
+                            {% if link.collection %}
+                                <span>&bull; {{ link.collection.name }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="link-actions">
+                        <a href="{{ url_for('links.edit_link', link_id=link.id) }}" class="icon-btn" title="Edit"><i data-lucide="edit-2"></i></a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state-compact">
+                <i data-lucide="inbox"></i>
+                <p>No links added yet.</p>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('links.add_link') }}" class="btn btn-sm btn-outline">Add your first link</a>
+                {% else %}
+                <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-outline">Sign up to add links</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Favorite Links Section -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>Favorites</h2>
+        </div>
+        
+        {% if favorite_links %}
+            <div class="link-list-compact">
+                {% for link in favorite_links %}
+                <div class="link-item">
+                    <div class="link-icon favorite-icon">
+                        <i data-lucide="star" class="filled"></i>
+                    </div>
+                    <div class="link-details">
+                        <h4><a href="{{ link.url }}" target="_blank">{{ link.title or link.url }}</a></h4>
+                        <div class="link-meta">
+                            <span>{{ link.link_type }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state-compact">
+                <i data-lucide="star"></i>
+                <p>No favorite links yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

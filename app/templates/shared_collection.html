@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}{{ collection.name }} - Shared Collection{% endblock %}
+
+{% block content %}
+<div class="page-header" style="text-align: center; margin-bottom: 40px; padding: 40px 20px; background: var(--bg-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+    <div class="header-content" style="max-width: 600px; margin: 0 auto;">
+        <div style="width: 60px; height: 60px; background: var(--primary-light); color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+            <i data-lucide="{{ collection.icon or 'folder' }}" style="width: 30px; height: 30px;"></i>
+        </div>
+        <h1 style="font-size: 2rem; margin-bottom: 10px;">{{ collection.name }}</h1>
+        <p style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.6;">{{ collection.description or 'A curated collection of links.' }}</p>
+        
+        <div style="margin-top: 20px; display: inline-flex; align-items: center; gap: 8px; background: var(--bg-color); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; color: var(--text-secondary);">
+            <i data-lucide="link-2" style="width: 16px; height: 16px;"></i> {{ links|length }} saved links
+        </div>
+    </div>
+</div>
+
+{% if links %}
+<div class="link-grid" id="linkGrid">
+    {% for link in links %}
+    <div class="link-card" style="box-shadow: var(--shadow-md);">
+        
+        <div class="card-header">
+            <div class="type-badge {{ link.link_type | lower | replace(' ', '-') }}">
+                <i data-lucide="{{ get_icon_for_type(link.link_type) }}"></i> {{ link.link_type }}
+            </div>
+            {% if link.is_favorite %}
+            <div style="color: var(--warning-color);">
+                <i data-lucide="star" class="filled"></i>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="card-body">
+            <h3 class="card-title" title="{{ link.title or link.url }}">{{ link.title or 'Untitled Link' }}</h3>
+            <p class="card-desc">{{ link.description or 'No description provided.' }}</p>
+            <a href="{{ link.url }}" target="_blank" class="card-url" title="{{ link.url }}">{{ link.url }}</a>
+        </div>
+        
+        <div class="card-footer" style="justify-content: space-between;">
+            <div class="tags-container">
+                {% for tag in link.tags %}
+                    <span class="tag">#{{ tag.name }}</span>
+                {% endfor %}
+            </div>
+            
+            <div class="card-actions">
+                <button class="icon-btn qr-btn" onclick="showQRCode('{{ link.url }}')" title="Show QR Code" style="background: none; border: none; cursor: pointer; color: var(--text-muted);"><i data-lucide="qr-code"></i></button>
+                <a href="{{ link.url }}" target="_blank" class="btn btn-sm btn-primary" style="display: flex; align-items: center; gap: 5px; text-decoration: none;">
+                    Visit <i data-lucide="external-link" style="width: 14px; height: 14px;"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state" style="padding: 60px 20px;">
+    <div class="empty-icon">
+        <i data-lucide="folder-open"></i>
+    </div>
+    <h2>This collection is empty</h2>
+    <p>No links have been added to this collection yet.</p>
+</div>
+{% endif %}
+
+<div style="text-align: center; margin-top: 50px; padding: 20px; color: var(--text-muted); font-size: 0.9rem;">
+    Powered by <a href="{{ url_for('dashboard.index') }}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">LinkVault</a>
+</div>
+{% endblock %}

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LinkVault{% endblock %}</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/tab_logo.jpg') }}">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=9">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}?v=9">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/forms.css') }}?v=9">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=9">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/minion_toggle.css') }}?v=9">
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="light-mode">
+    <script>
+        // Check local storage for theme early to avoid flicker
+        const savedTheme = localStorage.getItem('linkvault-theme');
+        if (savedTheme) {
+            document.body.className = savedTheme;
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.body.className = 'dark-mode';
+        }
+    </script>
+    
+    <div class="app-container">
+        {% if current_user.is_authenticated %}
+        <!-- Global Top Navbar -->
+        <header class="global-navbar">
+            <div class="global-navbar-left">
+                <div class="global-logo-text">
+                    <i data-lucide="link-2" style="color: var(--primary-color);"></i>
+                    <span>LinkVault</span> <span style="color: var(--text-muted); font-weight: 400; margin-left: 5px;">| User Panel</span>
+                </div>
+            </div>
+            <div class="global-navbar-right">
+                <i data-lucide="bell" style="color: var(--text-muted); cursor: pointer; margin-right: 15px; width: 20px; height: 20px;"></i>
+                
+                <div class="profile-dropdown-container">
+                    <div class="profile-dropdown-trigger" id="profileDropdownBtn">
+                        {% if current_user.profile_image %}
+                        <div class="profile-avatar" style="background-image: url('{{ url_for('static', filename='uploads/profiles/' + current_user.profile_image) }}'); background-size: cover; background-position: center; color: transparent;"></div>
+                        {% else %}
+                        <div class="profile-avatar">{{ current_user.username[0]|upper }}</div>
+                        {% endif %}
+                        <div class="profile-info">
+                            <span class="profile-name">{{ current_user.username }}</span>
+                            <span class="profile-email">{{ current_user.email }}</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="profile-caret"></i>
+                    </div>
+                    
+                    <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                        <a href="{{ url_for('dashboard.profile') }}"><i data-lucide="user"></i> Profile</a>
+                        <a href="{{ url_for('dashboard.profile') }}"><i data-lucide="key"></i> Change Password</a>
+                        <hr>
+                        <a href="{{ url_for('auth.logout') }}"><i data-lucide="log-out"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="app-body">
+            <nav class="sidebar" id="sidebar">
+                <div style="padding: 15px 20px; font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 1px;">NAVIGATION</div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="{{ url_for('dashboard.index') }}" class="{% if request.endpoint == 'dashboard.index' %}active{% endif %}"><i data-lucide="layout-dashboard"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('dashboard.profile') }}" class="{% if request.endpoint == 'dashboard.profile' %}active{% endif %}"><i data-lucide="user"></i> Profile</a></li>
+                <li><a href="{{ url_for('links.view_links') }}" class="{% if request.endpoint == 'links.view_links' or request.endpoint == 'links.add_link' or request.endpoint == 'links.edit_link' %}active{% endif %}"><i data-lucide="bookmark"></i> My Links</a></li>
+                <li><a href="{{ url_for('collections.view_collections') }}" class="{% if 'collections' in request.endpoint %}active{% endif %}"><i data-lucide="folder"></i> Collections</a></li>
+                <li><a href="{{ url_for('imports.import_links') }}" class="{% if request.endpoint == 'imports.import_links' %}active{% endif %}"><i data-lucide="download"></i> Import</a></li>
+                <li><a href="{{ url_for('exports.export_links') }}" class="{% if request.endpoint == 'exports.export_links' %}active{% endif %}"><i data-lucide="upload"></i> Export</a></li>
+                <li><a href="{{ url_for('dashboard.tools') }}" class="{% if request.endpoint == 'dashboard.tools' %}active{% endif %}"><i data-lucide="wrench"></i> Tools</a></li>
+            </ul>
+            
+            {% if current_user.is_admin %}
+            <div style="padding: 15px 20px 5px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; letter-spacing: 0.5px;">Administration</div>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}" style="color: var(--danger-color);">
+                        <i data-lucide="shield"></i> Admin Panel
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin.manage_links') }}" class="{% if request.endpoint == 'admin.manage_links' %}active{% endif %}" style="color: var(--danger-color);">
+                        <i data-lucide="link"></i> Manage Links
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin.manage_collections') }}" class="{% if request.endpoint == 'admin.manage_collections' %}active{% endif %}" style="color: var(--danger-color);">
+                        <i data-lucide="folder"></i> Manage Collections
+                    </a>
+                </li>
+            </ul>
+            {% endif %}
+            
+            <div class="sidebar-footer">
+                <div class="minion-toggle-container" style="margin-bottom: 15px;">
+                    <div class="minion-toggle">
+                        <input type="checkbox" id="themeToggleBtn" class="theme-toggle-input">
+                        <label for="themeToggleBtn">
+                            <span class="thumb"></span>
+                        </label>
+                    </div>
+                </div>
+                <a href="{{ url_for('auth.logout') }}" class="sidebar-logout">
+                    <i data-lucide="log-out"></i> Logout
+                </a>
+            </div>
+        </nav>
+        {% endif %}
+        
+        <main class="main-content {% if not current_user.is_authenticated %}full-width{% endif %}">
+            {% if current_user.is_authenticated %}
+            {% endif %}
+            
+            {% if current_user.is_authenticated %}
+            <!-- Secondary Page Header -->
+            <div class="page-subheader">
+                <h2 class="page-title">{% block page_title %}Dashboard{% endblock %}</h2>
+                <div class="page-breadcrumbs">
+                    <i data-lucide="home"></i> / User / <span>{% block breadcrumb_active %}Dashboard{% endblock %}</span>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="flash-messages" id="toastContainer">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="toast toast-{{ category }}">
+                                {% if category == 'success' %}<i data-lucide="check-circle"></i>
+                                {% elif category == 'error' %}<i data-lucide="alert-circle"></i>
+                                {% else %}<i data-lucide="info"></i>{% endif %}
+                                <span>{{ message }}</span>
+                                <button class="close-toast" onclick="this.parentElement.remove()"><i data-lucide="x"></i></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+            
+            <div class="content-wrapper">
+                {% block content %}{% endblock %}
+            </div>
+            
+            <!-- Scroll to Top Button with Progress Ring -->
+            <div class="scroll-progress-btn" id="scrollToTopBtn">
+                <svg class="progress-ring" width="60" height="60">
+                    <circle class="progress-ring__track" stroke="#e2e8f0" stroke-width="4" fill="transparent" r="26" cx="30" cy="30"/>
+                    <circle class="progress-ring__circle" stroke="#10b981" stroke-width="4" fill="transparent" r="26" cx="30" cy="30"/>
+                </svg>
+                <div class="scroll-btn-inner">
+                    <i data-lucide="arrow-up"></i>
+                </div>
+            </div>
+        </main>
+        {% if current_user.is_authenticated %}
+        </div> <!-- End app-body -->
+        {% endif %}
+        <!-- Global QR Code Modal -->
+        <div id="qrCodeModal" class="modal-overlay" style="display: none; z-index: 9999;">
+            <div class="modal-content" style="max-width: 400px; text-align: center;">
+                <div class="modal-header">
+                    <h2>Scan to Open</h2>
+                    <button class="close-modal" onclick="document.getElementById('qrCodeModal').style.display='none'"><i data-lucide="x"></i></button>
+                </div>
+                <div class="modal-body" style="display: flex; flex-direction: column; align-items: center; padding: 20px;">
+                    <div id="qrcode" style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;"></div>
+                    <p id="qrUrlText" style="word-break: break-all; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;"></p>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" onclick="downloadQR()"><i data-lucide="download"></i> Download Image</button>
+                        <button class="btn btn-outline" onclick="document.getElementById('qrCodeModal').style.display='none'">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+    <script>
+        function showQRCode(url) {
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = ''; // clear previous
+            new QRCode(qrContainer, {
+                text: url,
+                width: 200,
+                height: 200,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+            document.getElementById('qrUrlText').innerText = url;
+            document.getElementById('qrCodeModal').style.display = 'flex';
+            // Re-init icons for the new download button
+            lucide.createIcons();
+        }
+
+        function downloadQR() {
+            const qrContainer = document.getElementById('qrcode');
+            const img = qrContainer.querySelector('img');
+            const canvas = qrContainer.querySelector('canvas');
+            
+            let dataUrl = '';
+            if (img && img.src && img.src.startsWith('data:')) {
+                dataUrl = img.src;
+            } else if (canvas) {
+                dataUrl = canvas.toDataURL("image/png");
+            } else {
+                alert("QR Code not ready yet.");
+                return;
+            }
+            
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = 'LinkVault-QRCode.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+    
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=8"></script>
+    {% block scripts %}{% endblock %}
+    
+    <script>
+        // Initialize lucide icons
+        lucide.createIcons();
+        
+        // Scroll to Top Logic
+        const scrollBtn = document.getElementById('scrollToTopBtn');
+        if (scrollBtn) {
+            const circle = scrollBtn.querySelector('.progress-ring__circle');
+            const radius = circle.r.baseVal.value;
+            const circumference = radius * 2 * Math.PI;
+            
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            circle.style.strokeDashoffset = circumference;
+            
+            // Wait for DOM layout to settle
+            setTimeout(() => {
+                window.addEventListener('scroll', () => {
+                    // Height of the scrolling element
+                    const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+                    if (scrollHeight <= 0) return; // Not scrollable
+                    
+                    // Toggle visibility
+                    if (window.scrollY > 50) {
+                        scrollBtn.classList.add('visible');
+                    } else {
+                        scrollBtn.classList.remove('visible');
+                    }
+                    
+                    // Calculate progress
+                    const scrollPosition = window.scrollY;
+                    const scrollPercentage = Math.min(scrollPosition / scrollHeight, 1);
+                    
+                    // Update circle
+                    const offset = circumference - (scrollPercentage * circumference);
+                    circle.style.strokeDashoffset = offset;
+                });
+            }, 100);
+            
+            scrollBtn.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        }
+    </script>
+</body>
+</html>

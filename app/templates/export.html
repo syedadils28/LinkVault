@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Export Links - LinkVault{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-content">
+        <h1>Export Links</h1>
+        <p>Download your data in various formats.</p>
+    </div>
+</div>
+
+<div class="form-container">
+    <form method="POST" action="{{ url_for('exports.export_links') }}" class="standard-form export-form">
+        
+        <div class="form-section">
+            <h3>1. Select what to export</h3>
+            <div class="radio-group-vertical">
+                <label class="radio-container">
+                    <input type="radio" name="scope" value="all" checked onchange="toggleCollectionSelect()">
+                    <span class="radiomark"></span>
+                    <div class="radio-content">
+                        <strong>All Links</strong>
+                        <span>Export your entire LinkVault library</span>
+                    </div>
+                </label>
+                
+                <label class="radio-container">
+                    <input type="radio" name="scope" value="collection" id="scopeCollection" onchange="toggleCollectionSelect()">
+                    <span class="radiomark"></span>
+                    <div class="radio-content">
+                        <strong>Specific Collection</strong>
+                        <span>Export only links from a selected collection</span>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="form-group nested-group" id="collectionSelectGroup" style="display: none; margin-top: 15px; margin-left: 30px;">
+                <select name="collection_id" class="form-control">
+                    {% for collection in collections %}
+                        <option value="{{ collection.id }}">{{ collection.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-section mt-4">
+            <h3>2. Choose format</h3>
+            <div class="format-grid">
+                <label class="format-card">
+                    <input type="radio" name="format" value="docx" checked>
+                    <div class="format-card-content">
+                        <i data-lucide="file-text"></i>
+                        <h4>DOCX</h4>
+                        <p>Word document</p>
+                    </div>
+                </label>
+                
+                <label class="format-card">
+                    <input type="radio" name="format" value="xlsx">
+                    <div class="format-card-content">
+                        <i data-lucide="table"></i>
+                        <h4>XLSX</h4>
+                        <p>Excel spreadsheet</p>
+                    </div>
+                </label>
+                
+                <label class="format-card">
+                    <input type="radio" name="format" value="csv">
+                    <div class="format-card-content">
+                        <i data-lucide="file-spreadsheet"></i>
+                        <h4>CSV</h4>
+                        <p>Raw tabular data</p>
+                    </div>
+                </label>
+                
+                <label class="format-card">
+                    <input type="radio" name="format" value="md">
+                    <div class="format-card-content">
+                        <i data-lucide="file-code"></i>
+                        <h4>Markdown</h4>
+                        <p>GitHub README style</p>
+                    </div>
+                </label>
+                
+                <label class="format-card">
+                    <input type="radio" name="format" value="json">
+                    <div class="format-card-content">
+                        <i data-lucide="file-json"></i>
+                        <h4>JSON</h4>
+                        <p>Structured data</p>
+                    </div>
+                </label>
+                
+                <label class="format-card">
+                    <input type="radio" name="format" value="pdf">
+                    <div class="format-card-content">
+                        <i data-lucide="file"></i>
+                        <h4>PDF</h4>
+                        <p>Printable document</p>
+                    </div>
+                </label>
+            </div>
+        </div>
+        
+        <div class="form-actions mt-4">
+            <button type="submit" class="btn btn-primary btn-lg btn-block">
+                <i data-lucide="download"></i> Generate Export
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/export.js') }}"></script>
+{% endblock %}

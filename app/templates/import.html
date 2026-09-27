@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Import Links - LinkVault{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-content">
+        <h1>Import Links</h1>
+        <p>Bring in your bookmarks from other tools or previous exports.</p>
+    </div>
+</div>
+
+<div class="two-col-layout">
+    <div class="main-col">
+        <div class="content-card">
+            <form method="POST" action="{{ url_for('imports.import_links') }}" enctype="multipart/form-data" class="upload-form">
+                <div class="upload-area" id="uploadArea">
+                    <i data-lucide="upload-cloud" class="upload-icon"></i>
+                    <h3>Drag & Drop your file here</h3>
+                    <p>or click to browse</p>
+                    <input type="file" name="file" id="file" accept=".json,.csv" required class="hidden-input">
+                </div>
+                
+                <div class="selected-file" id="selectedFile" style="display: none;">
+                    <i data-lucide="file"></i>
+                    <span id="fileName">No file selected</span>
+                    <button type="button" class="icon-btn text-danger" id="removeFileBtn"><i data-lucide="x"></i></button>
+                </div>
+                
+                <div class="form-actions mt-4">
+                    <button type="submit" class="btn btn-primary btn-block" id="uploadSubmitBtn" disabled>
+                        <i data-lucide="download"></i> Import Links
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="side-col">
+        <div class="info-card">
+            <h3><i data-lucide="info"></i> Supported Formats</h3>
+            <div class="format-info">
+                <h4>JSON</h4>
+                <p>Use LinkVault's own exported JSON format for best results. Data should be structured as:</p>
+                <pre><code>{
+  "links": [
+    { "url": "...", "title": "..." }
+  ]
+}</code></pre>
+            </div>
+            <div class="format-info mt-3">
+                <h4>CSV</h4>
+                <p>Must contain at minimum a <code>URL</code> column. Recommended columns:</p>
+                <ul>
+                    <li>URL</li>
+                    <li>Title</li>
+                    <li>Description</li>
+                    <li>Type</li>
+                    <li>Favorite</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/import.js') }}"></script>
+{% endblock %}
